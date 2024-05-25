@@ -1,0 +1,11 @@
+be/kuleuven/caffeinerestservice/domain/Drink.class
+be/kuleuven/caffeinerestservice/domain/DrinksRepository.class
+be/kuleuven/caffeinerestservice/exceptions/DrinkNotFoundAdvice.class
+be/kuleuven/caffeinerestservice/controllers/DrinksRestController.class
+be/kuleuven/caffeinerestservice/exceptions/DrinkNotInStockAdvice.class
+be/kuleuven/caffeinerestservice/CaffeineRestServiceApplication.class
+be/kuleuven/caffeinerestservice/exceptions/DrinkNotInStockException.class
+be/kuleuven/caffeinerestservice/exceptions/CodeNotCorrectAdvice.class
+be/kuleuven/caffeinerestservice/exceptions/DrinkNotFoundException.class
+be/kuleuven/caffeinerestservice/domain/Brand.class
+be/kuleuven/caffeinerestservice/exceptions/CodeNotCorrectException.class
