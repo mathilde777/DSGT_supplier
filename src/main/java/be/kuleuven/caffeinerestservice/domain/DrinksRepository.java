@@ -17,7 +17,7 @@ import java.util.*;
 public class DrinksRepository {
     private static final Map<String, Drink> drinks = new HashMap<>();
     private static final Map<String, Integer> stock = new HashMap<>();
-    private static final Map<String, Reservation> reservedStock = new HashMap<>();
+    private static final Map<String, List<Reservation>> reservationStock = new HashMap<>();
 
     @PostConstruct
     public void initData() {
@@ -29,7 +29,6 @@ public class DrinksRepository {
         n1.setVolume(250.0);
         n1.setKcal(50);
         n1.setPrice(1.08);
-
 
         drinks.put(n1.getId(), n1);
         stock.put(n1.getId(), 2);
@@ -43,7 +42,6 @@ public class DrinksRepository {
         n2.setKcal(50);
         n2.setPrice(1.41);
 
-
         drinks.put(n2.getId(), n2);
         stock.put(n2.getId(), 1);
 
@@ -55,7 +53,6 @@ public class DrinksRepository {
         rb1.setVolume(250.0);
         rb1.setKcal(112);
         rb1.setPrice(1.65);
-
 
         drinks.put(rb1.getId(), rb1);
         stock.put(rb1.getId(), 5);
@@ -76,6 +73,7 @@ public class DrinksRepository {
         Assert.notNull(id, "The id must not be null");
         releaseExpiredReservations();  // Check for expired reservations before returning stock for a specific item
         int quantity = stock.get(id);
+        System.out.print("STOCKKKKKK" + quantity);
         Drink d = findDrink(id).orElseThrow(() -> new DrinkNotFoundException(id));
         Map<String, Integer> result = new HashMap<>();
         result.put(d.getName(), quantity);
@@ -97,74 +95,46 @@ public class DrinksRepository {
         Assert.notNull(reservationId, "The reservationId must not be null");
         releaseExpiredReservations();  // Check for expired reservations before buying a drink
 
-        List<String> drinkIds = new ArrayList<>();
-
-        // Find all reservations with the given reservationId
-        for (Map.Entry<String, Reservation> entry : reservedStock.entrySet()) {
-            if (entry.getValue().getReservationId().equals(reservationId)) {
-                drinkIds.add(entry.getKey());
+        for (Map.Entry<String, List<Reservation>> entry : reservationStock.entrySet()) {
+            List<Reservation> reservations = entry.getValue();
+            Iterator<Reservation> iterator = reservations.iterator();
+            while (iterator.hasNext()) {
+                Reservation reservation = iterator.next();
+                if (reservation.getReservationId().equals(reservationId)) {
+                    iterator.remove();
+                    return true;
+                }
             }
         }
-
-        if (drinkIds.isEmpty()) {
-            throw new DrinkNotFoundException(reservationId);
-        }
-
-        boolean allPurchased = true;
-
-        // Check if the drinks are in stock and decrement stock
-        for (String drinkId : drinkIds) {
-            if (stock.containsKey(drinkId) && stock.get(drinkId) > 0) {
-                int newStock = stock.get(drinkId) - 1;
-                stock.put(drinkId, newStock);
-
-                // Remove the reservation since the drink is purchased
-                reservedStock.remove(drinkId);
-            } else {
-                allPurchased = false;
-            }
-        }
-
-        if (!allPurchased) {
-            throw new DrinkNotInStockException("One or more drinks with reservation ID " + reservationId + " are not in stock.");
-        }
-
-        return true;
+        throw new DrinkNotFoundException("No reservations found with reservation ID " + reservationId);
     }
 
-
-    public boolean reserveDrink(String id , String resId) {
-
-        System.out.print("testtt");
+    public boolean reserveDrink(String id, String resId, String packId) {
         Assert.notNull(id, "The id must not be null");
         releaseExpiredReservations();  // Check for expired reservations before reserving a drink
-        //Drink d = findDrink(id).orElseThrow(() -> new DrinkNotFoundException(id))
         if (stock.containsKey(id) && stock.get(id) > 0) {
             int newStock = stock.get(id) - 1;
             stock.put(id, newStock);
-           // d.setReserved(d.getReserved() + 1);
-            reservedStock.put(id, new Reservation(id, Instant.now(),resId));
+            Reservation reservation = new Reservation(id, Instant.now(), resId, packId);
+            reservationStock.computeIfAbsent(id, k -> new ArrayList<>()).add(reservation);
             return true;
         } else {
-           // throw new DrinkNotInStockException(id);
             return false;
         }
     }
 
     private void releaseExpiredReservations() {
         Instant now = Instant.now();
-        List<String> expiredReservations = new ArrayList<>();
-
-        // Identify expired reservations
-        for (Map.Entry<String, Reservation> entry : reservedStock.entrySet()) {
-            if (entry.getValue().getTimestamp().plusSeconds(2 * 60).isBefore(now)) {
-                expiredReservations.add(entry.getKey());
+        for (Map.Entry<String, List<Reservation>> entry : reservationStock.entrySet()) {
+            List<Reservation> reservations = entry.getValue();
+            Iterator<Reservation> iterator = reservations.iterator();
+            while (iterator.hasNext()) {
+                Reservation reservation = iterator.next();
+                if (reservation.getTimestamp().plusSeconds(5 * 60).isBefore(now)) {
+                    iterator.remove();
+                    stock.put(reservation.getDrinkId(), stock.get(reservation.getDrinkId()) + 1);
+                }
             }
-        }
-        for (String id : expiredReservations) {
-            reservedStock.remove(id);
-            Drink d = findDrink(id).orElseThrow(() -> new DrinkNotFoundException(id));
-            stock.put(id, stock.get(id) + 1);
         }
     }
 
@@ -173,11 +143,16 @@ public class DrinksRepository {
         Assert.notNull(id, "The id must not be null");
         releaseExpiredReservations();  // Check for expired reservations before checking
 
-        // Retrieve the reservation based on the drink id
-        Reservation reservation = reservedStock.get(id);
+        List<Reservation> reservations = reservationStock.get(id);
+        if (reservations != null) {
+            for (Reservation reservation : reservations) {
+                if (reservation.getDrinkId().equals(id) && reservation.getReservationId().equals(reservationId)) {
+                    return true;
+                }
+            }
+        }
 
-        // Check if the retrieved reservation matches the provided reservationId
-        return reservation != null && reservation.getReservationId().equals(reservationId);
+        return false;
     }
 
     public boolean checkAvailability(String id) {
@@ -186,15 +161,14 @@ public class DrinksRepository {
         return stock.containsKey(id) && stock.get(id) > 0;
     }
 
-
     public void getReserved() {
-        releaseExpiredReservations();  // Check for expired reservations before returning stock
-        Map<String, Reservation> result = new HashMap<>();
-        for (Map.Entry<String, Reservation> entry : reservedStock.entrySet()) {
+        releaseExpiredReservations();  // Check for expired reservations before returning reserved stock
 
-            System.out.print(" Reserved " + entry.getKey() + "Reservation" + entry.getValue().getReservationId());
+        System.out.print(" RESERVED STOCK ");
+        for (Map.Entry<String, List<Reservation>> entry : reservationStock.entrySet()) {
+            for (Reservation reservation : entry.getValue()) {
+                System.out.print(" Reserved " + reservation.getDrinkId() + " Reservation " + reservation.getReservationId());
+            }
         }
-
     }
-
 }
