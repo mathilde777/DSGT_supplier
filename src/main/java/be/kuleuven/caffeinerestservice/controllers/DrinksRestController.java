@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
+@RequestMapping("/rest")
 public class DrinksRestController {
 
     private final DrinksRepository drinksRepository;
@@ -26,11 +28,10 @@ public class DrinksRestController {
         this.drinksRepository = drinksRepository;
     }
 
-    @GetMapping("/rest/drinks/{code}")
-    CollectionModel<EntityModel<Drink>> getAllDrinks(@PathVariable String code) {
+    @GetMapping("/drinks/{code}")
+    public CollectionModel<EntityModel<Drink>> getAllDrinks(@PathVariable String code) {
         if (checkCode(code)) {
             Collection<Drink> drinks = drinksRepository.getDrinkOptions();
-
             List<EntityModel<Drink>> drinkEntityModels = new ArrayList<>();
             for (Drink d : drinks) {
                 EntityModel<Drink> em = drinkToEntityModel(d.getId(), d, code);
@@ -43,14 +44,8 @@ public class DrinksRestController {
         }
     }
 
-    private boolean checkCode(String code) {
-        System.out.println(code);
-        String verificationCode = "1234";
-        return code.equals(verificationCode);
-    }
-
-    @GetMapping("rest/drinksId/{id}/{code}")
-    EntityModel<Drink> getDrink(@PathVariable String id, @PathVariable String code) {
+    @GetMapping("/drinksId/{id}/{code}")
+    public EntityModel<Drink> getDrink(@PathVariable String id, @PathVariable String code) {
         if (checkCode(code)) {
             Drink d = drinksRepository.findDrink(id).orElseThrow(() -> new DrinkNotFoundException(id));
             return drinkToEntityModel(id, d, code);
@@ -59,7 +54,7 @@ public class DrinksRestController {
         }
     }
 
-    @GetMapping("/rest/stock/{code}")
+    @GetMapping("/stock/{code}")
     public EntityModel<Map<String, Integer>> getAllStock(@PathVariable String code) {
         if (checkCode(code)) {
             Map<String, Integer> stock = drinksRepository.getStock();
@@ -70,7 +65,7 @@ public class DrinksRestController {
         }
     }
 
-    @PostMapping("/rest/stockID/{id}/{code}")
+    @PostMapping("/stockID/{id}/{code}")
     public EntityModel<Map<String, Integer>> getStock(@PathVariable String id, @PathVariable String code) {
         if (checkCode(code)) {
             Map<String, Integer> stock = drinksRepository.findStock(id);
@@ -81,10 +76,10 @@ public class DrinksRestController {
         }
     }
 
-    @PostMapping("/rest/drinksId/{id}/reserve/{reservationId}/{packageId}/{code}")
-    public ResponseEntity<String> reserveDrink(@PathVariable String id, @PathVariable String reservationId, @PathVariable String packageId, @PathVariable String code) {
+    @PostMapping("/drinksId/{id}/reserve/{reservationId}/{code}")
+    public ResponseEntity<String> reserveDrink(@PathVariable String id, @PathVariable String reservationId, @PathVariable String code) {
         if (checkCode(code)) {
-            boolean success = drinksRepository.reserveDrink(id, reservationId, packageId);
+            boolean success = drinksRepository.reserveDrink(id, reservationId);
             if (success) {
                 Map<String, Integer> stock = drinksRepository.findStock(id); // Get the updated stock
                 String message = "Drink with ID " + id + " reserved successfully. " + stock.values() + " left in stock.";
@@ -97,7 +92,7 @@ public class DrinksRestController {
         }
     }
 
-    @PostMapping("/rest/drinksId/{reservationId}/buy/{code}")
+    @PostMapping("/drinksId/{reservationId}/buy/{code}")
     public ResponseEntity<String> buyDrink(@PathVariable String reservationId, @PathVariable String code) {
         if (checkCode(code)) {
             boolean success = drinksRepository.buyDrink(reservationId);
@@ -111,7 +106,7 @@ public class DrinksRestController {
         }
     }
 
-    @PostMapping("/rest/drinksId/{id}/checkReservation/{reservationId}/{code}")
+    @PostMapping("/drinksId/{id}/checkReservation/{reservationId}/{code}")
     public ResponseEntity<Boolean> checkReservation(@PathVariable String id, @PathVariable String reservationId, @PathVariable String code) {
         if (checkCode(code)) {
             boolean exists = drinksRepository.checkReservation(reservationId, id);
@@ -121,7 +116,7 @@ public class DrinksRestController {
         }
     }
 
-    @PostMapping("/rest/drinksId/{id}/checkAvailability/{code}")
+    @PostMapping("/drinksId/{id}/checkAvailability/{code}")
     public ResponseEntity<Boolean> checkAvailability(@PathVariable String id, @PathVariable String code) {
         if (checkCode(code)) {
             boolean available = drinksRepository.checkAvailability(id);
@@ -131,13 +126,20 @@ public class DrinksRestController {
         }
     }
 
-    @PostMapping("/rest/getReserved/{code}")
-    public void getReserved(@PathVariable String code) {
+    @PostMapping("/getReserved/{code}")
+    public ResponseEntity<String> getReserved(@PathVariable String code) {
         if (checkCode(code)) {
             drinksRepository.getReserved();
+            return ResponseEntity.ok("Reserved drinks have been printed to the console.");
         } else {
             throw new CodeNotCorrectException(code);
         }
+    }
+
+    private boolean checkCode(String code) {
+        System.out.println(code);
+        String verificationCode = "1234"; // Consider moving this to a configuration file
+        return code.equals(verificationCode);
     }
 
     private EntityModel<Drink> drinkToEntityModel(String id, Drink drink, String code) {
