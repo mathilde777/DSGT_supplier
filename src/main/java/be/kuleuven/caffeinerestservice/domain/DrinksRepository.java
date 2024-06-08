@@ -91,7 +91,7 @@ public class DrinksRepository {
         return Optional.ofNullable(drink);
     }
 
-    public boolean buyDrink(String reservationId) {
+    public boolean buy(String reservationId) {
         Assert.notNull(reservationId, "The reservationId must not be null");
         releaseExpiredReservations();  // Check for expired reservations before buying a drink
         boolean result = false;
@@ -108,7 +108,7 @@ public class DrinksRepository {
 
     }
 
-    public boolean reserveDrink(String id, String resId) {
+    public boolean reserve(String id, String resId) {
         Assert.notNull(id, "The id must not be null");
         releaseExpiredReservations();  // Check for expired reservations before reserving a drink
         if (stock.containsKey(id) && stock.get(id) > 0) {

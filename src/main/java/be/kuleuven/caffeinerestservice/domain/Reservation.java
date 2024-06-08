@@ -3,20 +3,20 @@ package be.kuleuven.caffeinerestservice.domain;
 import java.time.Instant;
 
 public class Reservation {
-    private final String drinkId;
+    private final String itemId;
     private final Instant timestamp;
     private final String reservationId;
 
 
-    public Reservation(String drinkId, Instant timestamp, String resId) {
-        this.drinkId = drinkId;
+    public Reservation(String itemId, Instant timestamp, String resId) {
+        this.itemId = itemId;
         this.timestamp = timestamp;
         this. reservationId = resId;
 
     }
 
     public String getDrinkId() {
-        return drinkId;
+        return itemId;
     }
 
     public Instant getTimestamp() {
