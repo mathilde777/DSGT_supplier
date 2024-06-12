@@ -5,7 +5,7 @@ get item  -> @GetMapping("/itemId/{id}/{code}")
 
 get all stock ->  @GetMapping("/stock/{code}")
    
-get stock of one item -> @PostMapping("/stockID/{id}/{code}")
+get stock of one item -> @PostMapping("/itemID/{id}/stock/{code}")
    
 
 reserve items ->  @PostMapping("/itemId/{id}/reserve/{reservationId}/{code}")
@@ -24,3 +24,5 @@ checks that an item is still in stock -> @PostMapping("/itemId/{id}/checkAvailab
 get the list of reserved items -> @PostMapping("/getReserved/{code}")
     
 
+drinks -> port 8100
+snacks -> port 8200
