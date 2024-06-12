@@ -1,0 +1,26 @@
+get all items -> @GetMapping("/items/{code}")
+  
+get item  -> @GetMapping("/itemId/{id}/{code}")
+   
+
+get all stock ->  @GetMapping("/stock/{code}")
+   
+get stock of one item -> @PostMapping("/stockID/{id}/{code}")
+   
+
+reserve items ->  @PostMapping("/itemId/{id}/reserve/{reservationId}/{code}")
+    
+
+buy items -> @PostMapping("/buy/{reservationId}/{code}")
+  
+
+check that reervation  still valid -> @PostMapping("/itemId/{id}/checkReservation/{reservationId}/{code}")
+    
+removes reservations -> @PostMapping("/releaseReservation/{reservationId}/{code}")
+ 
+checks that an item is still in stock -> @PostMapping("/itemId/{id}/checkAvailability/{code}")
+    
+
+get the list of reserved items -> @PostMapping("/getReserved/{code}")
+    
+
