@@ -162,4 +162,15 @@ public class DrinksRepository {
         }
     }
 
+    public void releaseReservation(String id) {
+        Iterator<Reservation> iterator = reservations.iterator();
+        while (iterator.hasNext()) {
+            Reservation reservation = iterator.next();
+            if (reservation.getReservationId() == id) {
+                stock.put(reservation.getDrinkId(), stock.getOrDefault(reservation.getDrinkId(), 0) + 1);
+                iterator.remove();
+            }
+        }
+    }
+
 }
