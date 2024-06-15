@@ -25,7 +25,7 @@ public class DrinksRepository {
         n1.setPrice(1.08);
 
         drinks.put(n1.getId(), n1);
-        stock.put(n1.getId(), 2);
+        stock.put(n1.getId(), 20);
 
         Drink n2 = new Drink();
         n2.setId("ep3FAfq9y06EYXx14Mt0");
@@ -37,7 +37,7 @@ public class DrinksRepository {
         n2.setPrice(1.41);
 
         drinks.put(n2.getId(), n2);
-        stock.put(n2.getId(), 1);
+        stock.put(n2.getId(), 20);
 
         Drink rb1 = new Drink();
         rb1.setId("eIRRKA8H6lUF19NWHtMZ");
@@ -49,7 +49,7 @@ public class DrinksRepository {
         rb1.setPrice(1.65);
 
         drinks.put(rb1.getId(), rb1);
-        stock.put(rb1.getId(), 5);
+        stock.put(rb1.getId(), 20);
     }
 
     public Map<String, Integer> getStock() {
