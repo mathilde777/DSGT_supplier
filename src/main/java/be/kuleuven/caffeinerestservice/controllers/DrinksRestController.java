@@ -1,7 +1,7 @@
 package be.kuleuven.caffeinerestservice.controllers;
 
 import be.kuleuven.caffeinerestservice.domain.Drink;
-import be.kuleuven.caffeinerestservice.domain.DrinksRepository;
+import be.kuleuven.caffeinerestservice.service.DrinkService;
 import be.kuleuven.caffeinerestservice.exceptions.CodeNotCorrectException;
 import be.kuleuven.caffeinerestservice.exceptions.DrinkNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
-
+import java.util.List;
+import java.util.Map;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -21,23 +21,21 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping("/rest")
 public class DrinksRestController {
 
-    private final DrinksRepository drinksRepository;
+    private final DrinkService drinkService;
 
     @Autowired
-    DrinksRestController(DrinksRepository drinksRepository) {
-        this.drinksRepository = drinksRepository;
+    DrinksRestController (DrinkService drinkService) {
+        this.drinkService = drinkService;
     }
 
     @GetMapping("/items/{code}")
     public CollectionModel<EntityModel<Drink>> getAll(@PathVariable String code) {
         if (checkCode(code)) {
-            Collection<Drink> drinks = drinksRepository.getDrinkOptions();
-            List<EntityModel<Drink>> drinkEntityModels = new ArrayList<>();
-            for (Drink d : drinks) {
-                EntityModel<Drink> em = drinkToEntityModel(d.getId(), d, code);
-                drinkEntityModels.add(em);
-            }
-            return CollectionModel.of(drinkEntityModels,
+            List<Drink> snacks = drinkService.getSnackOptions().stream().toList();
+            List<EntityModel<Drink>> snackEntityModels = snacks.stream()
+                    .map(snack -> snackToEntityModel(snack.getId(), snack, code))
+                    .toList();
+            return CollectionModel.of(snackEntityModels,
                     linkTo(methodOn(DrinksRestController.class).getAll(code)).withSelfRel());
         } else {
             throw new CodeNotCorrectException(code);
@@ -47,8 +45,8 @@ public class DrinksRestController {
     @GetMapping("/itemId/{id}/{code}")
     public EntityModel<Drink> getItem(@PathVariable String id, @PathVariable String code) {
         if (checkCode(code)) {
-            Drink d = drinksRepository.findDrink(id).orElseThrow(() -> new DrinkNotFoundException(id));
-            return drinkToEntityModel(id, d, code);
+            Drink snack = drinkService.findSnack(id).orElseThrow(() -> new DrinkNotFoundException(id));
+            return snackToEntityModel(id, snack, code);
         } else {
             throw new CodeNotCorrectException(code);
         }
@@ -57,7 +55,7 @@ public class DrinksRestController {
     @GetMapping("/stock/{code}")
     public EntityModel<Map<String, Integer>> getAllStock(@PathVariable String code) {
         if (checkCode(code)) {
-            Map<String, Integer> stock = drinksRepository.getStock();
+            Map<String, Integer> stock = drinkService.getStock();
             return EntityModel.of(stock,
                     linkTo(methodOn(DrinksRestController.class).getAllStock(code)).withSelfRel());
         } else {
@@ -68,7 +66,7 @@ public class DrinksRestController {
     @PostMapping("/itemID/{id}/stock/{code}")
     public EntityModel<Map<String, Integer>> getStock(@PathVariable String id, @PathVariable String code) {
         if (checkCode(code)) {
-            Map<String, Integer> stock = drinksRepository.findStock(id);
+            Map<String, Integer> stock = drinkService.findStock(id);
             return EntityModel.of(stock,
                     linkTo(methodOn(DrinksRestController.class).getStock(id, code)).withSelfRel());
         } else {
@@ -77,15 +75,15 @@ public class DrinksRestController {
     }
 
     @PostMapping("/itemId/{id}/reserve/{reservationId}/{code}")
-    public ResponseEntity<String> reserveDrink(@PathVariable String id, @PathVariable String reservationId, @PathVariable String code) {
+    public ResponseEntity<String> reserveSnack(@PathVariable String id, @PathVariable String reservationId, @PathVariable String code) {
         if (checkCode(code)) {
-            boolean success = drinksRepository.reserve(id, reservationId);
+            boolean success = drinkService.reserveSnack(id, reservationId);
             if (success) {
-                Map<String, Integer> stock = drinksRepository.findStock(id); // Get the updated stock
-                String message = "Drink with ID " + id + " reserved successfully. " + stock.values() + " left in stock.";
+                Map<String, Integer> stock = drinkService.findStock(id); // Get the updated stock
+                String message = "Snack with ID " + id + " reserved successfully. " + stock.values() + " left in stock.";
                 return ResponseEntity.ok(message);
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to reserve drink with ID " + id);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to reserve snack with ID " + id);
             }
         } else {
             throw new CodeNotCorrectException(code);
@@ -93,13 +91,13 @@ public class DrinksRestController {
     }
 
     @PostMapping("/buy/{reservationId}/{code}")
-    public ResponseEntity<String> buyDrink(@PathVariable String reservationId, @PathVariable String code) {
+    public ResponseEntity<String> buySnack(@PathVariable String reservationId, @PathVariable String code) {
         if (checkCode(code)) {
-            boolean success = drinksRepository.buy(reservationId);
+            boolean success = drinkService.buyReservation(reservationId);
             if (success) {
-                return ResponseEntity.ok("Drink with reservation ID " + reservationId + " purchased successfully.");
+                return ResponseEntity.ok("Snack with reservation ID " + reservationId + " purchased successfully.");
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to purchase drink with reservation ID " + reservationId);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to purchase snack with reservation ID " + reservationId);
             }
         } else {
             throw new CodeNotCorrectException(code);
@@ -109,17 +107,17 @@ public class DrinksRestController {
     @PostMapping("/itemId/{id}/checkReservation/{reservationId}/{code}")
     public ResponseEntity<Boolean> checkReservation(@PathVariable String id, @PathVariable String reservationId, @PathVariable String code) {
         if (checkCode(code)) {
-            boolean exists = drinksRepository.checkReservation(reservationId, id);
+            boolean exists = drinkService.checkReservation(reservationId, id);
             return ResponseEntity.ok(exists);
         } else {
             throw new CodeNotCorrectException(code);
         }
     }
-    @PostMapping("/releaseReservation/{reservationId}/{code}")
-    public void releaseReservation( @PathVariable String reservationId, @PathVariable String code) {
-        if (checkCode(code)) {
-            drinksRepository.releaseReservation(reservationId);
 
+    @PostMapping("/releaseReservation/{reservationId}/{code}")
+    public void releaseReservation(@PathVariable String reservationId, @PathVariable String code) {
+        if (checkCode(code)) {
+            drinkService.releaseReservation(reservationId);
         } else {
             throw new CodeNotCorrectException(code);
         }
@@ -128,7 +126,7 @@ public class DrinksRestController {
     @PostMapping("/itemId/{id}/checkAvailability/{code}")
     public ResponseEntity<Boolean> checkAvailability(@PathVariable String id, @PathVariable String code) {
         if (checkCode(code)) {
-            boolean available = drinksRepository.checkAvailability(id);
+            boolean available = drinkService.checkAvailability(id);
             return ResponseEntity.ok(available);
         } else {
             throw new CodeNotCorrectException(code);
@@ -138,23 +136,21 @@ public class DrinksRestController {
     @PostMapping("/getReserved/{code}")
     public ResponseEntity<String> getReserved(@PathVariable String code) {
         if (checkCode(code)) {
-            drinksRepository.getReserved();
-            return ResponseEntity.ok("Reserved drinks have been printed to the console.");
+            drinkService.getReserved();
+            return ResponseEntity.ok("Reserved snacks have been printed to the console.");
         } else {
             throw new CodeNotCorrectException(code);
         }
     }
 
     private boolean checkCode(String code) {
-        System.out.println(code);
-        String verificationCode = "1234"; // Consider moving this to a configuration file
+        String verificationCode = "1234";
         return code.equals(verificationCode);
     }
 
-    private EntityModel<Drink> drinkToEntityModel(String id, Drink drink, String code) {
-        return EntityModel.of(drink,
-                linkTo(methodOn(DrinksRestController.class).getAll(code)).withRel("rest/drinks"),
-                linkTo(methodOn(DrinksRestController.class).getItem(id, code)).withRel("rest/drinks/{id}"));
+    private EntityModel<Drink> snackToEntityModel(String id, Drink snack, String code) {
+        return EntityModel.of(snack,
+                linkTo(methodOn(DrinksRestController.class).getAll(code)).withRel("rest/snacks"),
+                linkTo(methodOn(DrinksRestController.class).getItem(id, code)).withRel("rest/snackId/{id}"));
     }
 }
-

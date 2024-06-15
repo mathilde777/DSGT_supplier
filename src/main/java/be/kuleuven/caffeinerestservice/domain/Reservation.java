@@ -1,29 +1,48 @@
 package be.kuleuven.caffeinerestservice.domain;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.time.Instant;
 
+@Entity
 public class Reservation {
-    private final String itemId;
-    private final Instant timestamp;
-    private final String reservationId;
 
+    @Id
+    private String reservationId;
+    private String drinkId;
+    private Instant timestamp;
 
-    public Reservation(String itemId, Instant timestamp, String resId) {
-        this.itemId = itemId;
+    // Constructors
+    public Reservation() {}
+
+    public Reservation(String reservationId, String drinkId, Instant timestamp) {
+        this.reservationId = reservationId;
+        this.drinkId = drinkId;
         this.timestamp = timestamp;
-        this. reservationId = resId;
+    }
 
+    // Getters and setters
+    public String getReservationId() {
+        return reservationId;
+    }
+
+    public void setReservationId(String reservationId) {
+        this.reservationId = reservationId;
     }
 
     public String getDrinkId() {
-        return itemId;
+        return drinkId;
+    }
+
+    public void setSnackId(String snackId) {
+        this.drinkId = snackId;
     }
 
     public Instant getTimestamp() {
         return timestamp;
     }
-    public String getReservationId() {
-        return reservationId;
-    }
 
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
+    }
 }
