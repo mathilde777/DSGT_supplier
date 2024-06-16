@@ -18,14 +18,15 @@ public class ReservationRepository {
 
     public boolean buyReservation(String reservationId) {
         Iterator<Reservation> iterator = reservations.iterator();
+        boolean found = false;
         while (iterator.hasNext()) {
             Reservation reservation = iterator.next();
             if (reservation.getReservationId().equals(reservationId)) {
                 iterator.remove();
-                return true;
+                found = true;
             }
         }
-        return false;
+        return found;
     }
 
     public void releaseExpiredReservations(DrinksRepository drinkRepository) {

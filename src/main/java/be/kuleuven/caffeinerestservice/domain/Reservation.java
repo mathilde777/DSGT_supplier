@@ -1,19 +1,16 @@
 package be.kuleuven.caffeinerestservice.domain;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 import java.time.Instant;
 
-@Entity
 public class Reservation {
 
-    @Id
+
     private String reservationId;
     private String drinkId;
     private Instant timestamp;
 
-    // Constructors
     public Reservation() {}
+
 
     public Reservation(String reservationId, String drinkId, Instant timestamp) {
         this.reservationId = reservationId;

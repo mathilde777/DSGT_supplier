@@ -1,12 +1,9 @@
 package be.kuleuven.caffeinerestservice.domain;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 
-@Entity
 public class Drink {
 
-    @Id
+
     private String id;
     private String name;
     private String description;

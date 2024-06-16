@@ -21,6 +21,7 @@ public class DrinkService {
 
     @Transactional
     public boolean reserveSnack(String snackId, String reservationId) {
+        reservationRepository.releaseExpiredReservations(drinksRepository);
         boolean reserved = drinksRepository.reserveDrink(snackId, reservationId);
         if (reserved) {
             reservationRepository.addReservation(snackId, reservationId);
@@ -32,6 +33,7 @@ public class DrinkService {
 
     @Transactional
     public boolean buyReservation(String reservationId) {
+        reservationRepository.releaseExpiredReservations(drinksRepository);
         boolean bought = reservationRepository.buyReservation(reservationId);
         if (!bought) {
             throw new RuntimeException("Reservation not found");
@@ -40,12 +42,14 @@ public class DrinkService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Integer> getStock() {
-        return drinksRepository.getStock();
+    public void  getStock() {
+        reservationRepository.releaseExpiredReservations(drinksRepository);
+        drinksRepository.printCurrentStock();
     }
 
     @Transactional(readOnly = true)
     public Map<String, Integer> findStock(String id) {
+        reservationRepository.releaseExpiredReservations(drinksRepository);
         return drinksRepository.findStock(id);
     }
 
@@ -61,6 +65,7 @@ public class DrinkService {
 
     @Transactional(readOnly = true)
     public boolean checkReservation(String reservationId, String snackId) {
+        reservationRepository.releaseExpiredReservations(drinksRepository);
         for (Reservation res : reservationRepository.getReservations()) {
             if (res.getReservationId().equals(reservationId) && res.getDrinkId().equals(snackId)) {
                 return true;
@@ -71,11 +76,13 @@ public class DrinkService {
 
     @Transactional(readOnly = true)
     public boolean checkAvailability(String id) {
+        reservationRepository.releaseExpiredReservations(drinksRepository);
         return drinksRepository.getStock().getOrDefault(id, 0) > 0;
     }
 
     @Transactional
     public void releaseReservation(String reservationId) {
+        reservationRepository.releaseExpiredReservations(drinksRepository);
         Iterator<Reservation> iterator = reservationRepository.getReservations().iterator();
         while (iterator.hasNext()) {
             Reservation reservation = iterator.next();
@@ -93,6 +100,7 @@ public class DrinkService {
 
     public void getReserved() {
         System.out.println("Reserved list ");
+        reservationRepository.releaseExpiredReservations(drinksRepository);
         reservationRepository.getReservations().forEach(reservation -> {
             System.out.println("Reserved " + reservation.getDrinkId() + " | Reservation ID: " + reservation.getReservationId() +" | Reservation MADE AT " + reservation.getTimestamp());
         });

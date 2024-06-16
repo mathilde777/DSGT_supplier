@@ -52,12 +52,11 @@ public class DrinksRestController {
         }
     }
 
-    @GetMapping("/stock/{code}")
-    public EntityModel<Map<String, Integer>> getAllStock(@PathVariable String code) {
+    @PostMapping("/stock/{code}")
+    public ResponseEntity<String> getAllStock(@PathVariable String code) {
         if (checkCode(code)) {
-            Map<String, Integer> stock = drinkService.getStock();
-            return EntityModel.of(stock,
-                    linkTo(methodOn(DrinksRestController.class).getAllStock(code)).withSelfRel());
+            drinkService.getStock();
+            return ResponseEntity.ok("Stock have been printed to the console.");
         } else {
             throw new CodeNotCorrectException(code);
         }
